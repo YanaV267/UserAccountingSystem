@@ -103,7 +103,7 @@ databaseChangeLog:
                     references: users(id)
                     deleteCascade: true
               - column:
-                  name: number
+                  name: value
                   type: VARCHAR(13)
                   constraints:
                     nullable: false

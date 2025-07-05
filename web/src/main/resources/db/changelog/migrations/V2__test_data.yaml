@@ -116,7 +116,7 @@ databaseChangeLog:
                   name: user_id
                   value: 1
               - column:
-                  name: number
+                  name: value
                   value: "79157654321"
 
         - insert:
@@ -129,7 +129,7 @@ databaseChangeLog:
                   name: user_id
                   value: 2
               - column:
-                  name: number
+                  name: value
                   value: "79209876543"
 
         - insert:
@@ -142,5 +142,5 @@ databaseChangeLog:
                   name: user_id
                   value: 2
               - column:
-                  name: number
+                  name: value
                   value: "79157623321"

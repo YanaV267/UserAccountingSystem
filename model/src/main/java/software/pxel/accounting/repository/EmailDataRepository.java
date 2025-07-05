@@ -7,5 +7,4 @@ import software.pxel.accounting.entity.EmailData;
 @Repository
 public interface EmailDataRepository extends JpaRepository<EmailData, Long> {
 
-
 }
