@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import software.pxel.accounting.dto.user.UserReadDto;
 import software.pxel.accounting.dto.user.UserSearchDto;
-import software.pxel.accounting.service.impl.UserServiceImpl;
+import software.pxel.accounting.service.UserService;
 
 import java.time.LocalDate;
 
@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserServiceImpl service;
+    private final UserService service;
 
     @GetMapping("/search")
     public ResponseEntity<Page<UserReadDto>> searchUsers(

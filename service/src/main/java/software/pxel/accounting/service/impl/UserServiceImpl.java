@@ -10,13 +10,15 @@ import software.pxel.accounting.dto.user.UserSearchDto;
 import software.pxel.accounting.entity.User;
 import software.pxel.accounting.mapper.UserMapper;
 import software.pxel.accounting.repository.UserRepository;
+import software.pxel.accounting.service.UserService;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl {
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper mapper;
 
+    @Override
     @Cacheable(value = "userSearch", key = "{#request.name, #request.email, #request.phone, #request.dateOfBirth, #request.page, #request.size}")
     public Page<UserReadDto> searchUsers(UserSearchDto request) {
         Page<User> users = userRepository.searchUsers(

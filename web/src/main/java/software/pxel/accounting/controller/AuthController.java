@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.RestController;
 import software.pxel.accounting.dto.AuthResponseDto;
 import software.pxel.accounting.dto.email.EmailLoginDto;
 import software.pxel.accounting.dto.phone.PhoneLoginDto;
-import software.pxel.accounting.service.impl.AuthServiceImpl;
+import software.pxel.accounting.service.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final AuthServiceImpl authService;
+    private final AuthService authService;
 
     @PostMapping("/login/email")
     public ResponseEntity<AuthResponseDto> loginWithEmail(@RequestBody EmailLoginDto request) {

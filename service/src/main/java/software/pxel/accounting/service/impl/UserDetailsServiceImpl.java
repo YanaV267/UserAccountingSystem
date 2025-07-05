@@ -25,7 +25,6 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_
 @Service
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
-
     private final UserRepository userRepository;
     private final EmailDataRepository emailDataRepository;
     private final PhoneDataRepository phoneDataRepository;

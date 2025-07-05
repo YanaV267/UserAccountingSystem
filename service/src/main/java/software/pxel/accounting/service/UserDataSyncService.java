@@ -1,4 +1,4 @@
-package software.pxel.accounting.service.impl;
+package software.pxel.accounting.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserDataSyncServiceImpl {
+public class UserDataSyncService {
     private final UserRepository userRepository;
     private final UserSearchRepository userSearchRepository;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -47,7 +47,7 @@ public class UserDataSyncServiceImpl {
 
     private void clearSearchCache() {
         Set<String> keys = redisTemplate.keys("userSearch:*");
-        if (!keys.isEmpty()) {
+        if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
         }
     }
