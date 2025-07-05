@@ -1,5 +1,6 @@
 package software.pxel.accounting.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/account")
 @RequiredArgsConstructor
+@Tag(name = "AccountController", description = "Balance & transfers")
 public class AccountController {
     private final AccountService accountService;
     private final AuthService authService;
