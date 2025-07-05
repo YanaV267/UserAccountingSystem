@@ -1,4 +1,4 @@
-package software.pxel.accounting.service;
+package software.pxel.accounting.service.impl;
 
 import org.springframework.stereotype.Service;
 import software.pxel.accounting.dto.email.EmailUpdateDto;
@@ -7,6 +7,7 @@ import software.pxel.accounting.entity.User;
 import software.pxel.accounting.exception.ServiceException;
 import software.pxel.accounting.repository.DataRepository;
 import software.pxel.accounting.repository.UserRepository;
+import software.pxel.accounting.service.DataService;
 
 import javax.transaction.Transactional;
 
@@ -16,10 +17,10 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_THE_O
 import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_NOT_FOUND;
 
 @Service
-public class EmailService extends DataService<EmailData, EmailUpdateDto> {
+public class EmailServiceImpl extends DataService<EmailData, EmailUpdateDto> {
 
 
-    public EmailService(
+    public EmailServiceImpl(
             UserRepository userRepository,
             DataRepository<EmailData> dataRepository
     ) {

@@ -1,4 +1,4 @@
-package software.pxel.accounting.service;
+package software.pxel.accounting.service.impl;
 
 import org.springframework.stereotype.Service;
 import software.pxel.accounting.dto.phone.PhoneUpdateDto;
@@ -7,6 +7,7 @@ import software.pxel.accounting.entity.User;
 import software.pxel.accounting.exception.ServiceException;
 import software.pxel.accounting.repository.DataRepository;
 import software.pxel.accounting.repository.UserRepository;
+import software.pxel.accounting.service.DataService;
 
 import javax.transaction.Transactional;
 
@@ -16,9 +17,9 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_THE_O
 import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_NOT_FOUND;
 
 @Service
-public class PhoneService extends DataService<PhoneData, PhoneUpdateDto> {
+public class PhoneServiceImpl extends DataService<PhoneData, PhoneUpdateDto> {
 
-    public PhoneService(
+    public PhoneServiceImpl(
             UserRepository userRepository,
             DataRepository<PhoneData> dataRepository
     ) {
