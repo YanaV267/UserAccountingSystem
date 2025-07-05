@@ -1,0 +1,146 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: dev
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: "Иван Петров"
+              - column:
+                  name: date_of_birth
+                  value: "1990-05-15"
+              - column:
+                  name: password
+                  value: "$2a$10$xJwL5v2ZzK.EylB6F1d6E.5Xg7U3B7hQYQ7VzXcQN1xYt9WkZsQO"
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: "Петр Иванов"
+              - column:
+                  name: date_of_birth
+                  value: "1985-10-22"
+              - column:
+                  name: password
+                  value: "$2a$10$YH6ZJ8M9N0BvC1D2E3F4G.5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W1X2"
+
+        - insert:
+            tableName: accounts
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: user_id
+                  value: 1
+              - column:
+                  name: balance
+                  value: 10000.00
+              - column:
+                  name: initial_deposit
+                  value: 5000.00
+
+        - insert:
+            tableName: accounts
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: user_id
+                  value: 2
+              - column:
+                  name: balance
+                  value: 5000.00
+              - column:
+                  name: initial_deposit
+                  value: 5000.00
+
+        - insert:
+            tableName: email_data
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: user_id
+                  value: 1
+              - column:
+                  name: email
+                  value: "annamaks@gmail.com"
+
+        - insert:
+            tableName: email_data
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: user_id
+                  value: 1
+              - column:
+                  name: email
+                  value: "ivan.petrov@gmail.com"
+
+        - insert:
+            tableName: email_data
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: user_id
+                  value: 2
+              - column:
+                  name: email
+                  value: "petrivanov@gmail.com"
+
+        - insert:
+            tableName: phone_data
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: user_id
+                  value: 1
+              - column:
+                  name: number
+                  value: "79157654321"
+
+        - insert:
+            tableName: phone_data
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: user_id
+                  value: 2
+              - column:
+                  name: number
+                  value: "79209876543"
+
+        - insert:
+            tableName: phone_data
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: user_id
+                  value: 2
+              - column:
+                  name: number
+                  value: "79157623321"
