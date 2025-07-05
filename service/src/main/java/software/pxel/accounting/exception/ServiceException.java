@@ -23,7 +23,12 @@ public class ServiceException extends RuntimeException {
         ERR_EMAIL_ALREADY_IN_USE("Current email is already in use", HttpStatus.BAD_REQUEST),
         ERR_THE_ONLY_PHONE("The only phone can't be deleted", HttpStatus.BAD_REQUEST),
         ERR_THE_ONLY_EMAIL("The only email can't be deleted", HttpStatus.BAD_REQUEST),
-        ERR_NO_EMAIL_AND_PHONE("The only email can't be deleted", HttpStatus.BAD_REQUEST);
+        ERR_NO_EMAIL_AND_PHONE("The only email can't be deleted", HttpStatus.BAD_REQUEST),
+        ERR_INSUFFICIENT_FUNDS("Insufficient funds for transfer", HttpStatus.BAD_REQUEST),
+        ERR_TRANSFER_TO_SAME_ACCOUNT("Cannot transfer to the same account", HttpStatus.BAD_REQUEST),
+        ERR_ACCOUNT_NOT_FOUND("Account wasn't found", HttpStatus.BAD_REQUEST),
+        ERR_SENDER_ACCOUNT_NOT_FOUND("Sender account wasn't found", HttpStatus.BAD_REQUEST),
+        ERR_RECEIVER_ACCOUNT_NOT_FOUND("Receiver account wasn't found", HttpStatus.BAD_REQUEST);
 
         private final String message;
         private final HttpStatus status;

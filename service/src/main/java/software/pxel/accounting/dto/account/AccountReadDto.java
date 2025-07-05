@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AccountUpdateDto {
+public class AccountReadDto {
     private Long userId;
     private BigDecimal balance;
 }
