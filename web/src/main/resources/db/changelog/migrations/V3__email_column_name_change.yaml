@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: Yana Volkova
+      changes:
+        - renameColumn:
+            tableName: email_data
+            oldColumnName: email
+            newColumnName: data_value
+            columnDataType: VARCHAR(200)
+        - renameColumn:
+            tableName: phone_data
+            oldColumnName: value
+            newColumnName: data_value
+            columnDataType: VARCHAR(200)

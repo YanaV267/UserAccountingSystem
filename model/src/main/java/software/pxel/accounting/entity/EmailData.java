@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
@@ -18,4 +20,7 @@ import javax.persistence.Table;
 @Table(name = "email_data")
 public class EmailData extends AbstractData {
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }

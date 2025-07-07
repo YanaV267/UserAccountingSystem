@@ -9,8 +9,7 @@ import software.pxel.accounting.entity.EmailData;
 import software.pxel.accounting.entity.PhoneData;
 import software.pxel.accounting.entity.User;
 import software.pxel.accounting.exception.ServiceException;
-import software.pxel.accounting.repository.EmailDataRepository;
-import software.pxel.accounting.repository.PhoneDataRepository;
+import software.pxel.accounting.repository.DataRepository;
 import software.pxel.accounting.repository.UserRepository;
 import software.pxel.accounting.util.UserPrincipal;
 
@@ -26,8 +25,8 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
-    private final EmailDataRepository emailDataRepository;
-    private final PhoneDataRepository phoneDataRepository;
+    private final DataRepository<EmailData> emailDataRepository;
+    private final DataRepository<PhoneData> phoneDataRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

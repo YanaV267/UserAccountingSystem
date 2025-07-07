@@ -19,7 +19,6 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_
 @Service
 public class EmailServiceImpl extends DataService<EmailData, EmailUpdateDto> {
 
-
     public EmailServiceImpl(
             UserRepository userRepository,
             DataRepository<EmailData> dataRepository

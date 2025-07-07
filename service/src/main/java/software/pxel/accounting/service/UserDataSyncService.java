@@ -23,14 +23,13 @@ public class UserDataSyncService {
     private final UserSearchRepository userSearchRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
-    @Scheduled(fixedRate = 60000)
     @Transactional
+    @Scheduled(fixedRate = 60000)
     public void syncUsersToElasticsearch() {
-        List<User> users = userRepository.findAllWithEmailsAndPhones();
+        List<User> users = userRepository.findAll();
         List<UserSearchDocument> documents = users.stream()
                 .map(this::convertToDocument)
                 .collect(Collectors.toList());
-
         userSearchRepository.saveAll(documents);
         clearSearchCache();
     }

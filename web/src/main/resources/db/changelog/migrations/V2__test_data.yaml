@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 2
-      author: dev
+      author: Yana Volkova
       changes:
         - insert:
             tableName: users

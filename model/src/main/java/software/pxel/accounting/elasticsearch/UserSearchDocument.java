@@ -9,7 +9,6 @@ import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.Setting;
 
 import javax.persistence.Id;
 import java.time.LocalDate;
@@ -21,7 +20,6 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(indexName = "users")
-@Setting(settingPath = "/elasticsearch/settings.json")
 public class UserSearchDocument {
 
     @Id
