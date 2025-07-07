@@ -25,7 +25,7 @@ public class UserSearchDocument {
     @Id
     private Long id;
 
-    @Field(type = FieldType.Text, analyzer = "russian")
+    @Field(type = FieldType.Text)
     private String name;
 
     @Field(type = FieldType.Date, format = DateFormat.date)

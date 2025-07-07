@@ -30,30 +30,36 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "users") //изменила название таблицы в соответствии с корректным неймингом
 public class User implements Serializable {
+    private static final String FIELD_ID = "id";
+    private static final String FIELD_NAME = "name";
+    private static final String FIELD_DATE_OF_BIRTH = "date_of_birth";
+    private static final String FIELD_PASSWORD = "password";
+    private static final String FIELD_JOIN_FIELD_USER = "user";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = FIELD_ID)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = FIELD_NAME)
     private String name;
 
-    @Column(name = "date_of_birth")
+    @Column(name = FIELD_DATE_OF_BIRTH)
     private LocalDate dateOfBirth;
 
-    @Column(name = "password")
+    @Column(name = FIELD_PASSWORD)
     private char[] password;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = FIELD_JOIN_FIELD_USER, cascade = CascadeType.ALL)
     private Account account;
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = FIELD_JOIN_FIELD_USER, cascade = CascadeType.ALL)
     private Set<EmailData> emailData = new HashSet<>();
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = FIELD_JOIN_FIELD_USER, cascade = CascadeType.ALL)
     private Set<PhoneData> phoneData = new HashSet<>();
 }

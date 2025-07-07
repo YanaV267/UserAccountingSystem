@@ -20,11 +20,14 @@ import java.io.Serializable;
 @AllArgsConstructor
 @MappedSuperclass
 public class AbstractData implements Serializable {
+    private static final String FIELD_ID = "id";
+    private static final String FIELD_DATA_VALUE = "data_value";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = FIELD_ID)
     private Long id;
 
-    @Column(name = "data_value", unique = true)
+    @Column(name = FIELD_DATA_VALUE, unique = true)
     private String value;
 }

@@ -19,8 +19,9 @@ import javax.persistence.Table;
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "email_data")
 public class EmailData extends AbstractData {
+    private static final String FIELD_JOIN_FIELD_USER_ID = "user_id";
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = FIELD_JOIN_FIELD_USER_ID)
     private User user;
 }

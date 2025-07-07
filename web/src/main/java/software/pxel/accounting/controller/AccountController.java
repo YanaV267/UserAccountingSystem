@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import software.pxel.accounting.dto.account.AccountReadDto;
 import software.pxel.accounting.dto.account.AccountUpdateDto;
 import software.pxel.accounting.dto.account.TransferRequestDto;
 import software.pxel.accounting.service.AccountService;
@@ -44,9 +45,8 @@ public class AccountController {
     }
 
     @PutMapping("/balance")
-    public ResponseEntity<Void> updateBalance(@RequestBody AccountUpdateDto dto) {
-        accountService.updateBalance(dto);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AccountReadDto> updateBalance(@RequestBody AccountUpdateDto dto) {
+        return ResponseEntity.ok(accountService.updateBalance(dto));
     }
 }
 

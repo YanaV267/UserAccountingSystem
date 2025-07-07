@@ -27,21 +27,27 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Table(name = "accounts") //изменила название таблицы в соответствии с корректным неймингом
 public class Account implements Serializable {
+
+    private static final String FIELD_ID = "id";
+    private static final String FIELD_JOIN_FIELD_USER_ID = "user_id";
+    private static final String FIELD_BALANCE = "balance";
+    private static final String FIELD_INITIAL_DEPOSIT = "initial_deposit";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = FIELD_ID)
     private Long id;
 
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = FIELD_JOIN_FIELD_USER_ID)
     private User user;
 
-    @Column(name = "balance")
+    @Column(name = FIELD_BALANCE)
     private BigDecimal balance;
 
-    @Column(name = "initial_deposit")
+    @Column(name = FIELD_INITIAL_DEPOSIT)
     private BigDecimal initialDeposit;
 
 }
