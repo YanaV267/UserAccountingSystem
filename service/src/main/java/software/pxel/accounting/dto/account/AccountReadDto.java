@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountReadDto {
+    private Long id;
     private Long userId;
     private BigDecimal balance;
 }

@@ -24,5 +24,9 @@ public class PhoneData extends AbstractData {
     @ManyToOne
     @JoinColumn(name = FIELD_JOIN_FIELD_USER_ID)
     private User user;
+
+    public PhoneData(String value) {
+        super(value);
+    }
 }
 

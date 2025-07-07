@@ -62,4 +62,8 @@ public class User implements Serializable {
     @ToString.Exclude
     @OneToMany(mappedBy = FIELD_JOIN_FIELD_USER, cascade = CascadeType.ALL)
     private Set<PhoneData> phoneData = new HashSet<>();
+
+    public User(Long id) {
+        this.id = id;
+    }
 }

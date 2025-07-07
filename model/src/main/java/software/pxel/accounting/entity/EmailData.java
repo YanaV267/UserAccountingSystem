@@ -24,4 +24,8 @@ public class EmailData extends AbstractData {
     @ManyToOne
     @JoinColumn(name = FIELD_JOIN_FIELD_USER_ID)
     private User user;
+
+    public EmailData(String value) {
+        super(value);
+    }
 }

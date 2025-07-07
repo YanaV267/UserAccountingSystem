@@ -7,6 +7,8 @@ import software.pxel.accounting.dto.account.TransferRequestDto;
 import java.math.BigDecimal;
 
 public interface AccountService {
+    void applyInterest();
+
     void transferMoney(Long senderUserId, TransferRequestDto dto);
 
     BigDecimal getBalance(Long userId);

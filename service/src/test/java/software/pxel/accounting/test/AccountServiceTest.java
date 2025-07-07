@@ -6,10 +6,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import software.pxel.accounting.dto.account.AccountReadDto;
 import software.pxel.accounting.dto.account.AccountUpdateDto;
 import software.pxel.accounting.dto.account.TransferRequestDto;
@@ -18,30 +19,29 @@ import software.pxel.accounting.entity.User;
 import software.pxel.accounting.exception.ServiceException;
 import software.pxel.accounting.mapper.AccountMapper;
 import software.pxel.accounting.repository.AccountRepository;
+import software.pxel.accounting.service.AccountService;
 import software.pxel.accounting.service.impl.AccountServiceImpl;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static software.pxel.accounting.exception.ServiceException.Code.ERR_ACCOUNT_NOT_FOUND;
-import static software.pxel.accounting.exception.ServiceException.Code.ERR_INSUFFICIENT_FUNDS;
-import static software.pxel.accounting.exception.ServiceException.Code.ERR_RECEIVER_ACCOUNT_NOT_FOUND;
-import static software.pxel.accounting.exception.ServiceException.Code.ERR_SENDER_ACCOUNT_NOT_FOUND;
-import static software.pxel.accounting.exception.ServiceException.Code.ERR_TRANSFER_TO_SAME_ACCOUNT;
 
 @ExtendWith(MockitoExtension.class)
 class AccountServiceImplTest {
 
     @Mock
     private PlatformTransactionManager transactionManager;
+
+    @Mock
+    private TransactionStatus transactionStatus;
 
     @Mock
     private AccountRepository accountRepository;
@@ -53,177 +53,242 @@ class AccountServiceImplTest {
     private CacheManager cacheManager;
 
     @Mock
-    private TransactionStatus transactionStatus;
+    private Cache cache;
 
     @InjectMocks
     private AccountServiceImpl accountService;
 
-    private final Long SENDER_ID = 1L;
-    private final Long RECIPIENT_ID = 2L;
-    private final BigDecimal INITIAL_BALANCE = new BigDecimal("1000.00");
-    private final BigDecimal TRANSFER_AMOUNT = new BigDecimal("500.00");
+    private Account senderAccount;
+    private Account recipientAccount;
 
     @BeforeEach
     void setUp() {
-        when(transactionManager.getTransaction(any(DefaultTransactionDefinition.class)))
-                .thenReturn(transactionStatus);
+        accountService = new AccountServiceImpl(transactionManager, accountRepository, accountMapper);
+        ReflectionTestUtils.setField(accountService, "balanceIncreasePercentage", "10");
+        ReflectionTestUtils.setField(accountService, "balanceMaxMultiplier", "2");
+
+        senderAccount = new Account();
+        senderAccount.setId(1L);
+        senderAccount.setUser(new User(101L));
+        senderAccount.setBalance(BigDecimal.valueOf(1000));
+
+        recipientAccount = new Account();
+        recipientAccount.setId(2L);
+        senderAccount.setUser(new User(102L));
+        recipientAccount.setBalance(BigDecimal.valueOf(500));
     }
 
     @Test
-    void transferMoney_shouldTransferFundsSuccessfully() {
-        Account senderAccount = createAccount(SENDER_ID, INITIAL_BALANCE);
-        Account recipientAccount = createAccount(RECIPIENT_ID, INITIAL_BALANCE);
+    void getBalance_AccountExists_ReturnsBalance() {
+        when(accountRepository.findByUserId(anyLong())).thenReturn(Optional.of(senderAccount));
 
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(RECIPIENT_ID);
-        request.setAmount(TRANSFER_AMOUNT);
+        BigDecimal result = accountService.getBalance(101L);
 
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(senderAccount));
-        when(accountRepository.findByUserId(RECIPIENT_ID)).thenReturn(Optional.of(recipientAccount));
-
-        accountService.transferMoney(SENDER_ID, request);
-
-        assertEquals(new BigDecimal("500.00"), senderAccount.getBalance());
-        assertEquals(new BigDecimal("1500.00"), recipientAccount.getBalance());
-        verify(accountRepository, times(2)).save(any(Account.class));
+        assertEquals(BigDecimal.valueOf(1000), result);
+        verify(accountRepository).findByUserId(101L);
     }
 
     @Test
-    void transferMoney_shouldThrowWhenSenderNotFound() {
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(RECIPIENT_ID);
-        request.setAmount(TRANSFER_AMOUNT);
+    void getBalance_AccountNotFound_ThrowsException() {
+        when(accountRepository.findByUserId(anyLong())).thenReturn(Optional.empty());
 
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.empty());
-
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> accountService.transferMoney(SENDER_ID, request));
-        assertEquals(ERR_SENDER_ACCOUNT_NOT_FOUND, exception.getCode());
+        assertThrows(ServiceException.class, () -> accountService.getBalance(101L),
+                "Expected ERR_ACCOUNT_NOT_FOUND exception");
+        verify(accountRepository).findByUserId(101L);
     }
 
     @Test
-    void transferMoney_shouldThrowWhenRecipientNotFound() {
-        Account senderAccount = createAccount(SENDER_ID, INITIAL_BALANCE);
+    void updateBalance_AccountExists_UpdatesAndReturnsDto() {
+        AccountUpdateDto updateDto = new AccountUpdateDto();
+        updateDto.setUserId(101L);
+        updateDto.setBalance(BigDecimal.valueOf(1500));
 
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(RECIPIENT_ID);
-        request.setAmount(TRANSFER_AMOUNT);
+        Account updatedAccount = new Account();
+        updatedAccount.setId(1L);
+        updatedAccount.setUser(new User(102L));
+        updatedAccount.setBalance(BigDecimal.valueOf(1500));
 
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(senderAccount));
-        when(accountRepository.findByUserId(RECIPIENT_ID)).thenReturn(Optional.empty());
+        AccountReadDto expectedDto = new AccountReadDto();
+        expectedDto.setId(1L);
+        expectedDto.setBalance(BigDecimal.valueOf(1500));
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> accountService.transferMoney(SENDER_ID, request));
-        assertEquals(ERR_RECEIVER_ACCOUNT_NOT_FOUND, exception.getCode());
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.save(any(Account.class))).thenReturn(updatedAccount);
+        when(accountMapper.toDto(updatedAccount)).thenReturn(expectedDto);
+        when(cacheManager.getCache("accounts")).thenReturn(cache);
+
+        AccountReadDto result = accountService.updateBalance(updateDto);
+
+        assertEquals(BigDecimal.valueOf(1500), result.getBalance());
+        verify(accountRepository).save(senderAccount);
+        verify(cache).evict(101L);
     }
 
     @Test
-    void transferMoney_shouldThrowWhenInsufficientFunds() {
-        Account senderAccount = createAccount(SENDER_ID, new BigDecimal("400.00"));
-        Account recipientAccount = createAccount(RECIPIENT_ID, INITIAL_BALANCE);
+    void updateBalance_AccountNotFound_ThrowsException() {
+        AccountUpdateDto updateDto = new AccountUpdateDto();
+        updateDto.setUserId(101L);
+        updateDto.setBalance(BigDecimal.valueOf(1500));
 
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(RECIPIENT_ID);
-        request.setAmount(TRANSFER_AMOUNT);
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.empty());
 
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(senderAccount));
-        when(accountRepository.findByUserId(RECIPIENT_ID)).thenReturn(Optional.of(recipientAccount));
-
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> accountService.transferMoney(SENDER_ID, request));
-        assertEquals(ERR_INSUFFICIENT_FUNDS, exception.getCode());
+        assertThrows(ServiceException.class, () -> accountService.updateBalance(updateDto),
+                "Expected ERR_ACCOUNT_NOT_FOUND exception");
     }
 
     @Test
-    void transferMoney_shouldThrowWhenTransferToSameAccount() {
-        Account senderAccount = createAccount(SENDER_ID, INITIAL_BALANCE);
+    void transferMoney_ValidTransfer_UpdatesBalances() {
+        TransferRequestDto transferDto = new TransferRequestDto();
+        transferDto.setTargetUserId(102L);
+        transferDto.setAmount(BigDecimal.valueOf(200));
 
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(SENDER_ID);
-        request.setAmount(TRANSFER_AMOUNT);
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.findByUserId(102L)).thenReturn(Optional.of(recipientAccount));
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
 
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(senderAccount));
+        accountService.transferMoney(101L, transferDto);
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> accountService.transferMoney(SENDER_ID, request));
-        assertEquals(ERR_TRANSFER_TO_SAME_ACCOUNT, exception.getCode());
+        verify(accountRepository).save(argThat(account ->
+                account.getId().equals(1L) && account.getBalance().equals(BigDecimal.valueOf(800))));
+        verify(accountRepository).save(argThat(account ->
+                account.getId().equals(2L) && account.getBalance().equals(BigDecimal.valueOf(700))));
+        verify(transactionManager).commit(transactionStatus);
     }
 
     @Test
-    void transferMoney_shouldThrowWhenAmountIsNegative() {
-        // Arrange
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(RECIPIENT_ID);
-        request.setAmount(new BigDecimal("-100.00"));
+    void transferMoney_SenderNotFound_ThrowsException() {
+        TransferRequestDto transferDto = new TransferRequestDto();
+        transferDto.setTargetUserId(102L);
+        transferDto.setAmount(BigDecimal.valueOf(200));
 
-        assertThrows(IllegalArgumentException.class,
-                () -> accountService.transferMoney(SENDER_ID, request));
-    }
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.empty());
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
 
-    @Test
-    void transferMoney_shouldRollbackOnFailure() {
-        // Arrange
-        Account senderAccount = createAccount(SENDER_ID, INITIAL_BALANCE);
-        Account recipientAccount = createAccount(RECIPIENT_ID, INITIAL_BALANCE);
-
-        TransferRequestDto request = new TransferRequestDto();
-        request.setTargetUserId(RECIPIENT_ID);
-        request.setAmount(TRANSFER_AMOUNT);
-
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(senderAccount));
-        when(accountRepository.findByUserId(RECIPIENT_ID)).thenReturn(Optional.of(recipientAccount));
-        doThrow(new RuntimeException("DB Error")).when(accountRepository).save(any(Account.class));
-
-        assertThrows(RuntimeException.class,
-                () -> accountService.transferMoney(SENDER_ID, request));
+        assertThrows(ServiceException.class, () -> accountService.transferMoney(101L, transferDto),
+                "Expected ERR_SENDER_ACCOUNT_NOT_FOUND exception");
         verify(transactionManager).rollback(transactionStatus);
     }
 
     @Test
-    void getBalance_shouldReturnBalance() {
-        Account account = createAccount(SENDER_ID, INITIAL_BALANCE);
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(account));
+    void transferMoney_RecipientNotFound_ThrowsException() {
+        TransferRequestDto transferDto = new TransferRequestDto();
+        transferDto.setTargetUserId(102L);
+        transferDto.setAmount(BigDecimal.valueOf(200));
 
-        BigDecimal balance = accountService.getBalance(SENDER_ID);
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.findByUserId(102L)).thenReturn(Optional.empty());
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
 
-        assertEquals(INITIAL_BALANCE, balance);
+        assertThrows(ServiceException.class, () -> accountService.transferMoney(101L, transferDto),
+                "Expected ERR_RECEIVER_ACCOUNT_NOT_FOUND exception");
+        verify(transactionManager).rollback(transactionStatus);
     }
 
     @Test
-    void getBalance_shouldThrowWhenAccountNotFound() {
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.empty());
+    void transferMoney_InsufficientFunds_ThrowsException() {
+        TransferRequestDto transferDto = new TransferRequestDto();
+        transferDto.setTargetUserId(102L);
+        transferDto.setAmount(BigDecimal.valueOf(1500));
 
-        ServiceException exception = assertThrows(ServiceException.class,
-                () -> accountService.getBalance(SENDER_ID));
-        assertEquals(ERR_ACCOUNT_NOT_FOUND, exception.getCode());
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.findByUserId(102L)).thenReturn(Optional.of(recipientAccount));
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
+
+        assertThrows(ServiceException.class, () -> accountService.transferMoney(101L, transferDto),
+                "Expected ERR_INSUFFICIENT_FUNDS exception");
+        verify(transactionManager).rollback(transactionStatus);
     }
 
     @Test
-    void updateBalance_shouldUpdateBalance() {
-        Account account = createAccount(SENDER_ID, INITIAL_BALANCE);
-        Account updatedAccount = createAccount(SENDER_ID, new BigDecimal("1500.00"));
-        AccountUpdateDto updateDto = new AccountUpdateDto();
-        updateDto.setUserId(SENDER_ID);
-        updateDto.setBalance(new BigDecimal("1500.00"));
+    void transferMoney_SameAccount_ThrowsException() {
+        TransferRequestDto transferDto = new TransferRequestDto();
+        transferDto.setTargetUserId(101L);
+        transferDto.setAmount(BigDecimal.valueOf(200));
 
-        when(accountRepository.findByUserId(SENDER_ID)).thenReturn(Optional.of(account));
-        when(accountMapper.toDto(updatedAccount)).thenReturn(new AccountReadDto());
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
 
-        accountService.updateBalance(updateDto);
-
-        assertEquals(new BigDecimal("1500.00"), account.getBalance());
-        verify(accountRepository).save(account);
+        assertThrows(ServiceException.class, () -> accountService.transferMoney(101L, transferDto),
+                "Expected ERR_TRANSFER_TO_SAME_ACCOUNT exception");
+        verify(transactionManager).rollback(transactionStatus);
     }
 
-    private Account createAccount(Long userId, BigDecimal balance) {
-        User user = new User();
-        user.setName("Yana V");
-        user.setDateOfBirth(LocalDate.of(2002, 02, 14));
+    @Test
+    void transferMoney_InvalidAmount_ThrowsException() {
+        TransferRequestDto transferDto = new TransferRequestDto();
+        transferDto.setTargetUserId(102L);
+        transferDto.setAmount(BigDecimal.valueOf(-100));
 
-        Account account = new Account();
-        account.setId(userId);
-        account.setUser(user);
-        account.setBalance(balance);
-        return account;
+        when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
+        when(accountRepository.findByUserId(102L)).thenReturn(Optional.of(recipientAccount));
+        when(transactionManager.getTransaction(any())).thenReturn(transactionStatus);
+
+        assertThrows(IllegalArgumentException.class, () -> accountService.transferMoney(101L, transferDto),
+                "Expected IllegalArgumentException for negative amount");
+        verify(transactionManager).rollback(transactionStatus);
+    }
+
+    @Test
+    void applyInterest_NewAccount_SetsInitialDeposit() {
+        Account newAccount = new Account();
+        newAccount.setId(3L);
+        newAccount.setUser(new User(103L));
+        newAccount.setBalance(BigDecimal.valueOf(1000));
+        newAccount.setInitialDeposit(null);
+
+        when(accountRepository.findAll()).thenReturn(List.of(newAccount));
+
+        accountService.applyInterest();
+
+        verify(accountRepository).save(argThat(account ->
+                account.getInitialDeposit().equals(BigDecimal.valueOf(1000))));
+    }
+
+    @Test
+    void applyInterest_ExistingAccountBelowMax_IncreasesBalance() {
+        Account existingAccount = new Account();
+        existingAccount.setId(3L);
+        existingAccount.setUser(new User(103L));
+        existingAccount.setBalance(BigDecimal.valueOf(1000));
+        existingAccount.setInitialDeposit(BigDecimal.valueOf(500));
+
+        when(accountRepository.findAll()).thenReturn(List.of(existingAccount));
+
+        accountService.applyInterest();
+
+        verify(accountRepository).save(argThat(account ->
+                account.getBalance().compareTo(BigDecimal.valueOf(1100)) == 0));
+    }
+
+    @Test
+    void applyInterest_ExistingAccountAtMax_DoesNotIncrease() {
+        Account existingAccount = new Account();
+        existingAccount.setId(3L);
+        existingAccount.setUser(new User(103L));
+        existingAccount.setBalance(BigDecimal.valueOf(1000));
+        existingAccount.setInitialDeposit(BigDecimal.valueOf(500));
+
+        when(accountRepository.findAll()).thenReturn(List.of(existingAccount));
+
+        accountService.applyInterest();
+
+        verify(accountRepository).save(argThat(account ->
+                account.getBalance().compareTo(BigDecimal.valueOf(1000)) == 0));
+    }
+
+    @Test
+    void applyInterest_ExistingAccountNearMax_IncreasesToMax() {
+        Account existingAccount = new Account();
+        existingAccount.setId(3L);
+        existingAccount.setUser(new User(103L));
+        existingAccount.setBalance(BigDecimal.valueOf(900));
+        existingAccount.setInitialDeposit(BigDecimal.valueOf(500));
+
+        when(accountRepository.findAll()).thenReturn(List.of(existingAccount));
+
+        accountService.applyInterest();
+
+        verify(accountRepository).save(argThat(account ->
+                account.getBalance().compareTo(BigDecimal.valueOf(1000)) == 0));
     }
 }

@@ -30,4 +30,8 @@ public class AbstractData implements Serializable {
 
     @Column(name = FIELD_DATA_VALUE, unique = true)
     private String value;
+
+    public AbstractData(String value) {
+        this.value = value;
+    }
 }
