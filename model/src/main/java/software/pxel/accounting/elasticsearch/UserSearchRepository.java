@@ -24,4 +24,6 @@ public interface UserSearchRepository extends ElasticsearchRepository<UserSearch
             String phone,
             Pageable pageable
     );
+
+
 }
