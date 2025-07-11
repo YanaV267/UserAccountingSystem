@@ -38,7 +38,7 @@ public class RedisCacheTTLConfig {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(keySerializer))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(valueSerializer))
-                .entryTtl(Duration.ofMinutes(30)); // Default TTL
+                .entryTtl(Duration.ofMinutes(30));
 
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
         if (cacheProperties.getTimeToLive() != null) {

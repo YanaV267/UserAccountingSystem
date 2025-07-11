@@ -1,26 +1,22 @@
-package software.pxel.accounting.elasticsearch;
+package software.pxel.accounting.entity.document;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import javax.persistence.Id;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Set;
 
-@Getter
-@Setter
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(indexName = "users")
-public class UserSearchDocument {
+public class UserDocument implements Serializable {
 
     @Id
     private Long id;
@@ -28,13 +24,13 @@ public class UserSearchDocument {
     @Field(type = FieldType.Text)
     private String name;
 
-    @Field(type = FieldType.Date, format = DateFormat.date)
+    @Field(type = FieldType.Date)
     private LocalDate dateOfBirth;
 
-    @Field(type = FieldType.Keyword)
-    private Set<String> emails;
+    @Field(type = FieldType.Nested)
+    private Set<EmailDataDocument> emailData;
 
-    @Field(type = FieldType.Keyword)
-    private Set<String> phones;
+    @Field(type = FieldType.Nested)
+    private Set<PhoneDataDocument> phoneData;
 
 }

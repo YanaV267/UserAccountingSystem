@@ -2,7 +2,6 @@ package software.pxel.accounting.config;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,15 +19,11 @@ public class ElasticsearchConfig extends AbstractElasticsearchConfiguration {
     @Value("${spring.elasticsearch.port}")
     private int port;
 
-    @Override
     @Bean
+    @Override
     public RestHighLevelClient elasticsearchClient() {
-        RestClientBuilder builder = RestClient.builder(
-                        new HttpHost(host, port))
-                .setRequestConfigCallback(
-                        requestConfigBuilder -> requestConfigBuilder
-                                .setConnectionRequestTimeout(0));
-
-        return new RestHighLevelClient(builder);
+        return new RestHighLevelClient(
+                RestClient.builder(new HttpHost(host, port))
+        );
     }
 }

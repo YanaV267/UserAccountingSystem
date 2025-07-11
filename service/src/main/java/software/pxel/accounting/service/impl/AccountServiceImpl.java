@@ -2,6 +2,7 @@ package software.pxel.accounting.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -16,7 +17,6 @@ import software.pxel.accounting.dto.account.AccountUpdateDto;
 import software.pxel.accounting.dto.account.TransferRequestDto;
 import software.pxel.accounting.entity.Account;
 import software.pxel.accounting.exception.ServiceException;
-import software.pxel.accounting.mapper.AccountMapper;
 import software.pxel.accounting.repository.AccountRepository;
 import software.pxel.accounting.service.AccountService;
 
@@ -37,7 +37,7 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_TRANS
 public class AccountServiceImpl implements AccountService {
     private final PlatformTransactionManager transactionManager;
     private final AccountRepository accountRepository;
-    private final AccountMapper mapper;
+    private final ModelMapper mapper;
 
     @Value("${balance.increase-percentage}")
     private String balanceIncreasePercentage;
@@ -149,6 +149,6 @@ public class AccountServiceImpl implements AccountService {
         log.info("Updating balance for user {}", dto.getUserId());
         account.setBalance(dto.getBalance());
         accountRepository.save(account);
-        return mapper.toDto(account);
+        return mapper.map(account, AccountReadDto.class);
     }
 }
