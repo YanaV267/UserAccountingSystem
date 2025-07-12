@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -17,9 +18,7 @@ import software.pxel.accounting.dto.account.TransferRequestDto;
 import software.pxel.accounting.entity.Account;
 import software.pxel.accounting.entity.User;
 import software.pxel.accounting.exception.ServiceException;
-import software.pxel.accounting.mapper.AccountMapper;
 import software.pxel.accounting.repository.AccountRepository;
-import software.pxel.accounting.service.AccountService;
 import software.pxel.accounting.service.impl.AccountServiceImpl;
 
 import java.math.BigDecimal;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AccountServiceImplTest {
+class AccountServiceTest {
 
     @Mock
     private PlatformTransactionManager transactionManager;
@@ -47,7 +46,7 @@ class AccountServiceImplTest {
     private AccountRepository accountRepository;
 
     @Mock
-    private AccountMapper accountMapper;
+    private ModelMapper mapper;
 
     @Mock
     private CacheManager cacheManager;
@@ -63,7 +62,7 @@ class AccountServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        accountService = new AccountServiceImpl(transactionManager, accountRepository, accountMapper);
+        accountService = new AccountServiceImpl(transactionManager, accountRepository, mapper);
         ReflectionTestUtils.setField(accountService, "balanceIncreasePercentage", "10");
         ReflectionTestUtils.setField(accountService, "balanceMaxMultiplier", "2");
 
@@ -114,7 +113,7 @@ class AccountServiceImplTest {
 
         when(accountRepository.findByUserId(101L)).thenReturn(Optional.of(senderAccount));
         when(accountRepository.save(any(Account.class))).thenReturn(updatedAccount);
-        when(accountMapper.toDto(updatedAccount)).thenReturn(expectedDto);
+        when(mapper.map(updatedAccount, AccountReadDto.class)).thenReturn(expectedDto);
         when(cacheManager.getCache("accounts")).thenReturn(cache);
 
         AccountReadDto result = accountService.updateBalance(updateDto);
