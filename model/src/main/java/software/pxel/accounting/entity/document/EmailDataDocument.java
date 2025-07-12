@@ -12,6 +12,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmailDataDocument implements Serializable {
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Keyword)
     private String value;
 }
