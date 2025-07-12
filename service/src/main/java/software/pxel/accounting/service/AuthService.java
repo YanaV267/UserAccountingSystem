@@ -1,5 +1,6 @@
 package software.pxel.accounting.service;
 
+import io.jsonwebtoken.Jwt;
 import software.pxel.accounting.dto.AuthResponseDto;
 import software.pxel.accounting.dto.email.EmailLoginDto;
 import software.pxel.accounting.dto.phone.PhoneLoginDto;
@@ -10,5 +11,5 @@ public interface AuthService {
 
     AuthResponseDto authenticateWithPhone(PhoneLoginDto dto);
 
-    Long getUserId(String token);
+    Long getUserId();
 }
