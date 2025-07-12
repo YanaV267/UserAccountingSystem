@@ -1,5 +1,6 @@
 package software.pxel.accounting.entity.document;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 import javax.persistence.Id;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -27,10 +28,12 @@ public class UserDocument implements Serializable {
     @Field(type = FieldType.Date)
     private LocalDate dateOfBirth;
 
-    @Field(type = FieldType.Nested)
-    private Set<EmailDataDocument> emailData;
+    @Field(type = FieldType.Nested, name = "emailData")
+    @JsonProperty("emailData")
+    private List<EmailDataDocument> emailData;
 
-    @Field(type = FieldType.Nested)
-    private Set<PhoneDataDocument> phoneData;
+    @Field(type = FieldType.Nested, name = "phoneData")
+    @JsonProperty("phoneData")
+    private List<PhoneDataDocument> phoneData;
 
 }
