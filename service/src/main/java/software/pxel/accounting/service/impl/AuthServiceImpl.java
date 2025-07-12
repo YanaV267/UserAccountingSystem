@@ -1,5 +1,6 @@
 package software.pxel.accounting.service.impl;
 
+import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,6 +12,7 @@ import software.pxel.accounting.dto.email.EmailLoginDto;
 import software.pxel.accounting.dto.phone.PhoneLoginDto;
 import software.pxel.accounting.service.AuthService;
 import software.pxel.accounting.util.JwtTokenProvider;
+import software.pxel.accounting.util.UserPrincipal;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +48,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Long getUserId(String token) {
-        return jwtTokenProvider.getUserIdFromToken(token);
+    public Long getUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserPrincipal) {
+            return ((UserPrincipal) principal).getId();
+        } else if (principal instanceof Jwt) {
+            return jwtTokenProvider.getUserIdFromToken(principal.toString());
+        }
+        throw new IllegalStateException("Unexpected principal type: " +
+                (principal != null ? principal.getClass().getName() : "null"));
     }
 }

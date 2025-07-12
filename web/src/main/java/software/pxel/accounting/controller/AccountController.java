@@ -29,10 +29,8 @@ public class AccountController {
     private final AuthService authService;
 
     @PostMapping("/transfer")
-    public ResponseEntity<Void> transferMoney(
-            @RequestBody TransferRequestDto dto,
-            @RequestHeader("Authorization") String token) {
-        Long userId = authService.getUserId(token);
+    public ResponseEntity<Void> transferMoney(@RequestBody TransferRequestDto dto) {
+        Long userId = authService.getUserId();
         accountService.transferMoney(userId, dto);
         return ResponseEntity.ok().build();
     }

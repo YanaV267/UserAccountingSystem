@@ -120,7 +120,7 @@ public class AccountServiceImpl implements AccountService {
             accountRepository.save(senderAccount);
             accountRepository.save(recipientAccount);
 
-            log.info("Transfer completed: {} from user {} (balance: {} -> {}) to user {} (balance: {} -> {})",
+            log.info("Transfer completed: {} from user {} ({} -> {}) to user {} ({} -> {})",
                     dto.getAmount(),
                     senderUserId, senderBalanceBefore, senderAccount.getBalance(),
                     dto.getTargetUserId(), recipientBalanceBefore, recipientAccount.getBalance());
@@ -161,6 +161,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     @Cacheable(value = "accounts", key = "#userId")
     public BigDecimal getBalance(Long userId) {
         log.debug("Fetching balance for user: {}", userId);
