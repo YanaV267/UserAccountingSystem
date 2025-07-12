@@ -46,10 +46,10 @@ databaseChangeLog:
                   value: 1
               - column:
                   name: balance
-                  value: 10000.00
+                  value: 100.00
               - column:
                   name: initial_deposit
-                  value: 5000.00
+                  value: 50.00
 
         - insert:
             tableName: accounts
@@ -62,10 +62,10 @@ databaseChangeLog:
                   value: 2
               - column:
                   name: balance
-                  value: 5000.00
+                  value: 50.00
               - column:
                   name: initial_deposit
-                  value: 5000.00
+                  value: 50.00
 
         - insert:
             tableName: email_data

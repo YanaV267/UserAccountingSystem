@@ -48,62 +48,89 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Scheduled(fixedRate = 30000)
     public void applyInterest() {
+        log.info("Starting interest application process");
         List<Account> accounts = accountRepository.findAll();
-        BigDecimal maxAllowedMultiplier = new BigDecimal(balanceIncreasePercentage)
-                .divide(BigDecimal.valueOf(100), RoundingMode.CEILING);
-        BigDecimal balanceIncreaseValue = new BigDecimal(balanceIncreasePercentage)
-                .divide(BigDecimal.valueOf(100), RoundingMode.CEILING)
-                .add(BigDecimal.ONE);
+        log.debug("Found {} accounts for interest processing", accounts.size());
+
+        BigDecimal interestRate = new BigDecimal(balanceIncreasePercentage)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal maxMultiplier = new BigDecimal(balanceMaxMultiplier)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
         for (Account account : accounts) {
             if (account.getInitialDeposit() == null) {
+                log.debug("Setting initial deposit for account {}: {}", account.getId(), account.getBalance());
                 account.setInitialDeposit(account.getBalance());
                 accountRepository.save(account);
-                continue;
             }
 
             BigDecimal currentBalance = account.getBalance();
             BigDecimal initialDeposit = account.getInitialDeposit();
-            BigDecimal maxAllowedBalance = initialDeposit.multiply(maxAllowedMultiplier);
+            BigDecimal maxAllowedBalance = initialDeposit.multiply(maxMultiplier);
 
-            if (currentBalance.compareTo(maxAllowedBalance) < 0) {
-                BigDecimal newBalance = currentBalance.multiply(balanceIncreaseValue);
-                if (newBalance.compareTo(maxAllowedBalance) > 0) {
-                    newBalance = maxAllowedBalance;
-                }
-                account.setBalance(newBalance);
-                accountRepository.save(account);
-
-                log.info("Updated balance for account {}: {} -> {}",
-                        account.getId(), currentBalance, newBalance);
+            if (currentBalance.compareTo(maxAllowedBalance) >= 0) {
+                log.debug("Account {} already at max allowed balance: {} (max: {})",
+                        account.getId(), currentBalance, maxAllowedBalance);
+                continue;
             }
+
+            BigDecimal newBalance = currentBalance.multiply(BigDecimal.ONE.add(interestRate));
+            if (newBalance.compareTo(maxAllowedBalance) > 0) {
+                newBalance = maxAllowedBalance;
+                log.debug("Limiting balance increase for account {} at max allowed value: {}",
+                        account.getId(), maxAllowedBalance);
+            }
+
+            account.setBalance(newBalance);
+            accountRepository.save(account);
+
+            log.info("Updated balance for account {}: {} -> {} (initial deposit: {})",
+                    account.getId(), currentBalance, newBalance, initialDeposit);
         }
+        log.info("Interest application process completed");
     }
 
     @Override
     @Transactional
     public void transferMoney(Long senderUserId, TransferRequestDto dto) {
+        log.info("Initiating transfer from user {} to user {} for amount {}",
+                senderUserId, dto.getTargetUserId(), dto.getAmount());
+
         executeInTransaction(() -> {
             Account senderAccount = accountRepository.findByUserId(senderUserId)
-                    .orElseThrow(() -> new ServiceException(ERR_SENDER_ACCOUNT_NOT_FOUND));
+                    .orElseThrow(() -> {
+                        log.error("Sender account not found for user: {}", senderUserId);
+                        return new ServiceException(ERR_SENDER_ACCOUNT_NOT_FOUND);
+                    });
 
             Account recipientAccount = accountRepository.findByUserId(dto.getTargetUserId())
-                    .orElseThrow(() -> new ServiceException(ERR_RECEIVER_ACCOUNT_NOT_FOUND));
+                    .orElseThrow(() -> {
+                        log.error("Recipient account not found for user: {}", dto.getTargetUserId());
+                        return new ServiceException(ERR_RECEIVER_ACCOUNT_NOT_FOUND);
+                    });
 
             validateTransfer(senderAccount, recipientAccount, dto.getAmount());
 
-            senderAccount.setBalance(senderAccount.getBalance().subtract(dto.getAmount()));
-            recipientAccount.setBalance(recipientAccount.getBalance().add(dto.getAmount()));
+            BigDecimal senderBalanceBefore = senderAccount.getBalance();
+            BigDecimal recipientBalanceBefore = recipientAccount.getBalance();
+
+            senderAccount.setBalance(senderBalanceBefore.subtract(dto.getAmount()));
+            recipientAccount.setBalance(recipientBalanceBefore.add(dto.getAmount()));
 
             accountRepository.save(senderAccount);
             accountRepository.save(recipientAccount);
 
-            log.info("Transfer completed from user {} to user {}", senderUserId, dto.getTargetUserId());
+            log.info("Transfer completed: {} from user {} (balance: {} -> {}) to user {} (balance: {} -> {})",
+                    dto.getAmount(),
+                    senderUserId, senderBalanceBefore, senderAccount.getBalance(),
+                    dto.getTargetUserId(), recipientBalanceBefore, recipientAccount.getBalance());
         });
     }
 
     private void validateTransfer(Account sender, Account recipient, BigDecimal amount) {
         if (sender.getBalance().compareTo(amount) < 0) {
-            log.warn("Insufficient funds for transfer in amount {}", amount);
+            log.warn("Insufficient funds for transfer: account {} has {}, requested {}",
+                    sender.getId(), sender.getBalance(), amount);
             throw new ServiceException(ERR_INSUFFICIENT_FUNDS);
         }
 
@@ -119,12 +146,15 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private void executeInTransaction(Runnable operation) {
+        log.debug("Starting new transaction");
         TransactionStatus status = transactionManager.getTransaction(
                 new DefaultTransactionDefinition(TransactionDefinition.PROPAGATION_REQUIRES_NEW));
         try {
             operation.run();
             transactionManager.commit(status);
+            log.debug("Transaction committed successfully");
         } catch (Exception e) {
+            log.error("Transaction failed, rolling back", e);
             transactionManager.rollback(status);
             throw e;
         }
@@ -135,7 +165,10 @@ public class AccountServiceImpl implements AccountService {
     public BigDecimal getBalance(Long userId) {
         log.debug("Fetching balance for user: {}", userId);
         return accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new ServiceException(ERR_ACCOUNT_NOT_FOUND))
+                .orElseThrow(() -> {
+                    log.error("Account not found for user: {}", userId);
+                    return new ServiceException(ERR_ACCOUNT_NOT_FOUND);
+                })
                 .getBalance();
     }
 
@@ -143,12 +176,18 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @CacheEvict(value = "accounts", key = "#userId")
     public AccountReadDto updateBalance(AccountUpdateDto dto) {
+        log.info("Updating balance for user {} to {}", dto.getUserId(), dto.getBalance());
         Account account = accountRepository.findByUserId(dto.getUserId())
-                .orElseThrow(() -> new ServiceException(ERR_ACCOUNT_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("Account not found for user: {}", dto.getUserId());
+                    return new ServiceException(ERR_ACCOUNT_NOT_FOUND);
+                });
 
-        log.info("Updating balance for user {}", dto.getUserId());
+        BigDecimal oldBalance = account.getBalance();
         account.setBalance(dto.getBalance());
         accountRepository.save(account);
+
+        log.debug("Balance updated for user {}: {} -> {}", dto.getUserId(), oldBalance, dto.getBalance());
         return mapper.map(account, AccountReadDto.class);
     }
 }
