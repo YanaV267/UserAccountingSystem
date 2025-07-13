@@ -7,9 +7,6 @@ databaseChangeLog:
             tableName: users
             columns:
               - column:
-                  name: id
-                  value: 1
-              - column:
                   name: name
                   value: "Иван Петров"
               - column:
@@ -22,9 +19,6 @@ databaseChangeLog:
         - insert:
             tableName: users
             columns:
-              - column:
-                  name: id
-                  value: 2
               - column:
                   name: name
                   value: "Петр Иванов"
@@ -39,9 +33,6 @@ databaseChangeLog:
             tableName: accounts
             columns:
               - column:
-                  name: id
-                  value: 1
-              - column:
                   name: user_id
                   value: 1
               - column:
@@ -55,9 +46,6 @@ databaseChangeLog:
             tableName: accounts
             columns:
               - column:
-                  name: id
-                  value: 2
-              - column:
                   name: user_id
                   value: 2
               - column:
@@ -71,9 +59,6 @@ databaseChangeLog:
             tableName: email_data
             columns:
               - column:
-                  name: id
-                  value: 1
-              - column:
                   name: user_id
                   value: 1
               - column:
@@ -83,9 +68,6 @@ databaseChangeLog:
         - insert:
             tableName: email_data
             columns:
-              - column:
-                  name: id
-                  value: 2
               - column:
                   name: user_id
                   value: 1
@@ -97,9 +79,6 @@ databaseChangeLog:
             tableName: email_data
             columns:
               - column:
-                  name: id
-                  value: 3
-              - column:
                   name: user_id
                   value: 2
               - column:
@@ -109,9 +88,6 @@ databaseChangeLog:
         - insert:
             tableName: phone_data
             columns:
-              - column:
-                  name: id
-                  value: 1
               - column:
                   name: user_id
                   value: 1
@@ -123,9 +99,6 @@ databaseChangeLog:
             tableName: phone_data
             columns:
               - column:
-                  name: id
-                  value: 2
-              - column:
                   name: user_id
                   value: 2
               - column:
@@ -135,9 +108,6 @@ databaseChangeLog:
         - insert:
             tableName: phone_data
             columns:
-              - column:
-                  name: id
-                  value: 3
               - column:
                   name: user_id
                   value: 2
