@@ -9,8 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import software.pxel.accounting.dto.AbstractDataCreateDto;
 import software.pxel.accounting.dto.AbstractDataUpdateDto;
 import software.pxel.accounting.entity.AbstractData;
 import software.pxel.accounting.service.DataService;
@@ -18,20 +17,19 @@ import software.pxel.accounting.util.JwtTokenProvider;
 
 import javax.validation.Valid;
 
-@RestController
-@RequestMapping("/api/users/{userId}")
 @RequiredArgsConstructor
-public abstract class AbstractDataController<E extends AbstractData, U extends AbstractDataUpdateDto> {
+public abstract class AbstractDataController<E extends AbstractData, C extends AbstractDataCreateDto,
+        U extends AbstractDataUpdateDto> {
     private final JwtTokenProvider jwtTokenProvider;
-    private final DataService<E, U> service;
+    private final DataService<E, C, U> service;
 
     @PostMapping
     public ResponseEntity<Void> create(
             @PathVariable Long userId,
-            @RequestBody @Valid String value,
+            @RequestBody @Valid C dto,
             @RequestHeader("Authorization") String token) {
         validateOwnership(userId, token);
-        service.create(userId, value);
+        service.create(userId, dto);
         return ResponseEntity.ok().build();
     }
 

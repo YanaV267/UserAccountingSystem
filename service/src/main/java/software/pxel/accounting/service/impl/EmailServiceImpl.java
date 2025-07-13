@@ -1,6 +1,7 @@
 package software.pxel.accounting.service.impl;
 
 import org.springframework.stereotype.Service;
+import software.pxel.accounting.dto.email.EmailCreateDto;
 import software.pxel.accounting.dto.email.EmailUpdateDto;
 import software.pxel.accounting.entity.EmailData;
 import software.pxel.accounting.entity.User;
@@ -17,7 +18,7 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_THE_O
 import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_NOT_FOUND;
 
 @Service
-public class EmailServiceImpl extends DataService<EmailData, EmailUpdateDto> {
+public class EmailServiceImpl extends DataService<EmailData, EmailCreateDto, EmailUpdateDto> {
 
     public EmailServiceImpl(
             UserRepository userRepository,
@@ -28,15 +29,15 @@ public class EmailServiceImpl extends DataService<EmailData, EmailUpdateDto> {
 
     @Override
     @Transactional
-    public void create(Long userId, String email) {
-        if (dataRepository.existsByValue(email)) {
+    public void create(Long userId, EmailCreateDto dto) {
+        if (dataRepository.existsByValue(dto.getEmail())) {
             throw new ServiceException(ERR_EMAIL_ALREADY_IN_USE);
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceException(ERR_USER_NOT_FOUND));
 
         EmailData emailData = new EmailData();
-        emailData.setValue(email);
+        emailData.setValue(dto.getEmail());
         emailData.setUser(user);
         user.getEmailData().add(emailData);
 

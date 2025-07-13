@@ -1,6 +1,7 @@
 package software.pxel.accounting.service.impl;
 
 import org.springframework.stereotype.Service;
+import software.pxel.accounting.dto.phone.PhoneCreateDto;
 import software.pxel.accounting.dto.phone.PhoneUpdateDto;
 import software.pxel.accounting.entity.PhoneData;
 import software.pxel.accounting.entity.User;
@@ -17,7 +18,7 @@ import static software.pxel.accounting.exception.ServiceException.Code.ERR_THE_O
 import static software.pxel.accounting.exception.ServiceException.Code.ERR_USER_NOT_FOUND;
 
 @Service
-public class PhoneServiceImpl extends DataService<PhoneData, PhoneUpdateDto> {
+public class PhoneServiceImpl extends DataService<PhoneData, PhoneCreateDto, PhoneUpdateDto> {
 
     public PhoneServiceImpl(
             UserRepository userRepository,
@@ -28,15 +29,15 @@ public class PhoneServiceImpl extends DataService<PhoneData, PhoneUpdateDto> {
 
     @Override
     @Transactional
-    public void create(Long userId, String phone) {
-        if (dataRepository.existsByValue(phone)) {
+    public void create(Long userId, PhoneCreateDto dto) {
+        if (dataRepository.existsByValue(dto.getPhone())) {
             throw new ServiceException(ERR_PHONE_ALREADY_IN_USE);
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceException(ERR_USER_NOT_FOUND));
 
         PhoneData phoneData = new PhoneData();
-        phoneData.setValue(phone);
+        phoneData.setValue(dto.getPhone());
         phoneData.setUser(user);
         user.getPhoneData().add(phoneData);
 

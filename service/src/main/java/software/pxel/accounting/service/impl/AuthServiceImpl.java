@@ -2,6 +2,7 @@ package software.pxel.accounting.service.impl;
 
 import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,6 +15,7 @@ import software.pxel.accounting.service.AuthService;
 import software.pxel.accounting.util.JwtTokenProvider;
 import software.pxel.accounting.util.UserPrincipal;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -22,40 +24,69 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponseDto authenticateWithEmail(EmailLoginDto dto) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        dto.getEmail(),
-                        dto.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtTokenProvider.generateToken(authentication);
-        return new AuthResponseDto(token);
+        log.debug("Attempting email authentication for: {}", dto.getEmail());
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            dto.getEmail(),
+                            dto.getPassword()
+                    )
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = jwtTokenProvider.generateToken(authentication);
+            log.info("Successful email authentication for: {}", dto.getEmail());
+
+            return new AuthResponseDto(token);
+        } catch (Exception e) {
+            log.error("Email authentication failed for: {}. Reason: {}", dto.getEmail(), e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     public AuthResponseDto authenticateWithPhone(PhoneLoginDto dto) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        dto.getPhone(),
-                        dto.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String token = jwtTokenProvider.generateToken(authentication);
+        log.debug("Attempting phone authentication for: {}", dto.getPhone());
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            dto.getPhone(),
+                            dto.getPassword()
+                    )
+            );
 
-        return new AuthResponseDto(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = jwtTokenProvider.generateToken(authentication);
+            log.info("Successful phone authentication for: {}", dto.getPhone());
+
+            return new AuthResponseDto(token);
+        } catch (Exception e) {
+            log.error("Phone authentication failed for: {}. Reason: {}", dto.getPhone(), e.getMessage());
+            throw e;
+        }
     }
 
     @Override
     public Long getUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserPrincipal) {
-            return ((UserPrincipal) principal).getId();
-        } else if (principal instanceof Jwt) {
-            return jwtTokenProvider.getUserIdFromToken(principal.toString());
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+            if (principal instanceof UserPrincipal) {
+                Long userId = ((UserPrincipal) principal).getId();
+                log.debug("Retrieved user ID from UserPrincipal: {}", userId);
+                return userId;
+            } else if (principal instanceof Jwt) {
+                Long userId = jwtTokenProvider.getUserIdFromToken(principal.toString());
+                log.debug("Retrieved user ID from JWT: {}", userId);
+                return userId;
+            }
+
+            String principalType = principal != null ? principal.getClass().getName() : "null";
+            log.error("Unexpected principal type: {}", principalType);
+            throw new IllegalStateException("Unexpected principal type: " + principalType);
+        } catch (Exception e) {
+            log.error("Failed to get user ID: {}", e.getMessage());
+            throw e;
         }
-        throw new IllegalStateException("Unexpected principal type: " +
-                (principal != null ? principal.getClass().getName() : "null"));
     }
 }
